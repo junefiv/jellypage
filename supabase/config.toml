@@ -1,0 +1,19 @@
+project_id = "hexy"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15
+
+[functions.match_take]
+verify_jwt = true
+
+[functions.iap_google]
+verify_jwt = false
+
+[functions.iap_apple]
+verify_jwt = true
+
+[functions.handle_new_user]
+verify_jwt = false

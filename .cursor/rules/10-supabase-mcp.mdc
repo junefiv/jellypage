@@ -1,0 +1,14 @@
+---
+description: Project-scoped hexy-supabase MCP only
+alwaysApply: true
+---
+
+# Supabase MCP
+
+- Use only the project MCP server named `hexy-supabase` from this repo `.cursor/mcp.json`.
+- Never add Supabase to `~/.cursor/mcp.json`.
+- Never call a server named `supabase`.
+- Never use `https://mcp.supabase.com/mcp` without `project_ref`.
+- Write SQL to `supabase/migrations/` before `apply_migration`.
+- Edge source of truth is `supabase/functions/<name>/index.ts`. MCP deploy is the ship path only.
+- Keep `storage` in the MCP features query. Hosted MCP disables Storage unless listed.

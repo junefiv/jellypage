@@ -1,0 +1,8 @@
+export const MATCH = {
+  CANDIDATE_LIMIT: 50,
+  RECENT_DAYS: 90,
+  CLOSE_MIN_SCORE: 0.82,
+  OPEN_MIN_SCORE: 0.48,
+  OPEN_SLOTS: 3,
+  CLOSE_SLOTS: 2,
+} as const;

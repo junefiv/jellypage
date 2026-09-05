@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "hexy-supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=REPLACE_PROJECT_REF&features=database,docs,development,functions,debugging,storage"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+---
+description: HEXy product tone, copy, and MVP bans
+alwaysApply: true
+---
+
+# HEXy product
+
+Log system. Cold, hip, numeric. Not a mood collector.
+
+- Copy: English short words + numbers only. No poetic sentences.
+- Theme: dark only. Background `#0B0B0B`.
+- Fixed microcopy only: TAKE, MATCH 5, 3 OPEN · 2 CLOSE, Δ, LOCK, UNLOCK SOON, DELETE TAKE, FIRST DM  ₩500, NO MATCH, PALETTE FAIL, COPY PALETTE, FOLLOW, FOLLOWING, DM.
+- No UNLOCK economy, ads, subscriptions, quests, likes, comments, public discovery feed, missions, map pins, group chat, color-name NLP.
+- CLOSE match stays `UNLOCK SOON` stub. Do not add unlock tables or products.
+- Matching responses must never include `original_path`.
+- OPEN shows mid blur only. CLOSE shows no photo.
+- Do not invent shelf / bottle / polaroid / paper / neighbor metaphors.
