@@ -5,8 +5,6 @@ import { useEffect, useRef } from 'react';
 
 import { useJellyAttrs, useJellyBind } from '@/src/components/jelly/useJellyAttrs';
 
-import '../../../vendor/jelly-ui/jelly.js';
-
 type Props = {
   dom?: DOMProps;
   value: string;
@@ -24,6 +22,10 @@ export default function JellyInputDom({
   onValueChange,
 }: Props) {
   const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    void import('../../../vendor/jelly-ui/jelly.js');
+  }, []);
 
   useJellyAttrs(ref, {
     size: 'sm',

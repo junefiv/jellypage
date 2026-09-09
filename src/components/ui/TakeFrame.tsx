@@ -11,8 +11,8 @@ import { colors } from '@/src/theme/tokens';
 
 const FRAME = 62 / 86;
 const EDGE = `${(6 / 62) * 100}%`;
-const MARK = 22;
-const HIT = 28;
+const MARK = 12;
+const HIT = 18;
 
 type Props = {
   photoUri: string | null;
@@ -271,7 +271,7 @@ function OriginMarks({
               height: MARK,
               borderRadius: MARK / 2,
               backgroundColor: c.hex,
-              borderWidth: 2,
+              borderWidth: 1.5,
               borderColor: '#F3EFE6',
             }}
           />

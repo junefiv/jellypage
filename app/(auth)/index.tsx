@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -13,6 +13,7 @@ import { useDraft } from '@/src/features/cam/draft';
 import { supabase } from '@/src/lib/supabase';
 
 export default function AuthScreen() {
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
   const refreshProfile = useSession((s) => s.refreshProfile);
@@ -20,12 +21,12 @@ export default function AuthScreen() {
 
   async function afterAuth() {
     await refreshProfile();
-    if (draft) {
+    if (draft && next !== 'log') {
       const take = await persistTake(draft);
       router.replace(`/take/${take.id}`);
       return;
     }
-    router.replace('/(tabs)/cam');
+    router.replace(next === 'log' ? '/(tabs)/log' : '/(tabs)/cam');
   }
 
   return (

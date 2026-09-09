@@ -6,8 +6,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useJellyAttrs, useJellyBind } from '@/src/components/jelly/useJellyAttrs';
 import { SHUTTER_FACE, SHUTTER_FRAME } from '@/src/components/ui/shutterConstants';
 
-import '../../../vendor/jelly-ui/jelly.js';
-
 type Props = {
   dom?: DOMProps;
   tone: string;
@@ -157,6 +155,11 @@ function ShutterEyes() {
 
 export default function JellyShutterDom({ tone, busy, onPress }: Props) {
   const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    // The custom element extends HTMLElement, so load it only in the browser.
+    void import('../../../vendor/jelly-ui/jelly.js');
+  }, []);
 
   const attrs = useMemo(
     () => ({

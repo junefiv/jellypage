@@ -8,7 +8,10 @@ import type { PaletteColor } from '@/src/palette/types';
 
 import type { DraftTake } from '../cam/draft';
 
-export async function persistTake(draft: DraftTake): Promise<Take> {
+export async function persistTake(
+  draft: DraftTake,
+  options: { runMatch?: boolean } = {},
+): Promise<Take> {
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
   if (!uid) throw new Error('AUTH');
@@ -23,6 +26,7 @@ export async function persistTake(draft: DraftTake): Promise<Take> {
     .maybeSingle();
 
   const ready = draft.palette.length >= 5;
+  const runMatch = options.runMatch ?? true;
   const { data, error } = await supabase
     .from('takes')
     .insert({
@@ -35,18 +39,18 @@ export async function persistTake(draft: DraftTake): Promise<Take> {
       match_public: draft.source !== 'raw' && ready && (profile?.default_match_public ?? true),
       source: draft.source,
       status: 'processing',
-      match_status: ready ? 'pending' : 'idle',
+      match_status: ready && runMatch ? 'pending' : 'idle',
     })
     .select('*')
     .single();
   if (error || !data) throw error ?? new Error('TAKE');
 
   const take = data as Take;
-  void uploadAndMatch(take, draft.localUri);
+  void uploadAndMatch(take, draft.localUri, runMatch);
   return take;
 }
 
-async function uploadAndMatch(take: Take, localUri: string | null) {
+async function uploadAndMatch(take: Take, localUri: string | null, runMatch: boolean) {
   try {
     let originalPath: string | null = null;
     let blurPath: string | null = null;
@@ -73,7 +77,7 @@ async function uploadAndMatch(take: Take, localUri: string | null) {
       })
       .eq('id', take.id);
 
-    if (take.source !== 'raw' && take.palette.length >= 5) {
+    if (runMatch && take.source !== 'raw' && take.palette.length >= 5) {
       await supabase.functions.invoke('match_take', { body: { take_id: take.id } });
     }
     await queryClient.invalidateQueries({ queryKey: ['takes'] });

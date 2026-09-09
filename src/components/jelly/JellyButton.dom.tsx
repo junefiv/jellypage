@@ -1,12 +1,10 @@
 'use dom';
 
 import type { DOMProps } from 'expo/dom';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useJellyAttrs, useJellyBind } from '@/src/components/jelly/useJellyAttrs';
 import { inkOn } from '@/src/theme/tokens';
-
-import '../../../vendor/jelly-ui/jelly.js';
 
 type Variant = 'white' | 'rose' | 'amber' | 'azure' | 'mint' | 'platinum' | 'graphite';
 
@@ -39,6 +37,11 @@ export default function JellyButtonDom({
   onPress,
 }: Props) {
   const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    void import('../../../vendor/jelly-ui/jelly.js');
+  }, []);
+
   const tone = fill ? variant : active ? 'mint' : variant;
 
   useJellyAttrs(ref, {
@@ -58,6 +61,8 @@ export default function JellyButtonDom({
   });
 
   const style: Record<string, string | number> = {};
+  style.overflow = 'visible';
+  style.pointerEvents = 'auto';
   if (fill) {
     const label = inkOn(fill);
     style['--jelly-fill'] = fill;
@@ -69,7 +74,6 @@ export default function JellyButtonDom({
 
   return (
     <div
-      onPointerUp={onPress ? () => void onPress() : undefined}
       style={
         fillHost
           ? {
@@ -79,13 +83,24 @@ export default function JellyButtonDom({
               width: '100%',
               height: '100%',
               boxSizing: 'border-box',
+              overflow: 'visible',
+              pointerEvents: 'none',
               background: 'transparent',
             }
-          : { display: 'inline-flex', background: 'transparent' }
+          : {
+              display: 'inline-flex',
+              overflow: 'visible',
+              pointerEvents: 'none',
+              background: 'transparent',
+            }
       }
     >
-      <jelly-theme mode="dark">
-        <jelly-button ref={bind as never} style={style}>
+      <jelly-theme mode="dark" style={{ overflow: 'visible', pointerEvents: 'none' }}>
+        <jelly-button
+          ref={bind as never}
+          style={style}
+          onClick={onPress ? () => void onPress() : undefined}
+        >
           {label}
         </jelly-button>
       </jelly-theme>

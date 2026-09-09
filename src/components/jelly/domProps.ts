@@ -4,7 +4,11 @@ export const jellyDom = (extra?: Partial<DOMProps>): { dom: DOMProps } => ({
   dom: {
     matchContents: true,
     scrollEnabled: false,
-    style: { backgroundColor: 'transparent' },
     ...extra,
+    style: {
+      backgroundColor: 'transparent',
+      overflow: 'visible',
+      ...extra?.style,
+    },
   },
 });

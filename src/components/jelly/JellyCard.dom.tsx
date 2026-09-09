@@ -1,14 +1,17 @@
 'use dom';
 
 import type { DOMProps } from 'expo/dom';
-
-import '../../../vendor/jelly-ui/jelly.js';
+import { useEffect } from 'react';
 
 type Props = {
   dom?: DOMProps;
 };
 
 export default function JellyCardDom(_props: Props) {
+  useEffect(() => {
+    void import('../../../vendor/jelly-ui/jelly.js');
+  }, []);
+
   return (
     <div style={{ display: 'block', width: '100%', minHeight: 56, background: 'transparent' }}>
       <jelly-theme mode="dark">

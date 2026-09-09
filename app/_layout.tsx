@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 
 import { useSession } from '@/src/features/auth/session';
+import { syncLocalAlbum } from '@/src/features/take/sync-local-album';
 import { queryClient } from '@/src/lib/query';
 import { colors } from '@/src/theme/tokens';
 
@@ -37,6 +38,7 @@ export default function RootLayout() {
   });
   const hydrate = useSession((s) => s.hydrate);
   const ready = useSession((s) => s.ready);
+  const profile = useSession((s) => s.profile);
 
   useEffect(() => {
     if (error) throw error;
@@ -49,6 +51,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded && ready) SplashScreen.hideAsync();
   }, [loaded, ready]);
+
+  useEffect(() => {
+    if (profile) void syncLocalAlbum();
+  }, [profile?.id]);
 
   if (!loaded || !ready) return null;
 
@@ -68,6 +74,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="me" />
           <Stack.Screen name="take/[id]" />
+          <Stack.Screen name="local/[id]" />
           <Stack.Screen name="take/preview" />
           <Stack.Screen name="match/[id]" />
           <Stack.Screen name="open/[takeId]" />

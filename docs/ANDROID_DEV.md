@@ -12,7 +12,7 @@ Jelly UI는 **Expo Go가 아니라 개발 빌드(dev client)** 에서만 동작�
 
 ```bash
 git clone <repo-url>
-cd jellypage
+cd jelly-page
 npm install
 ```
 
@@ -59,9 +59,9 @@ node scripts/gen-shutter-boing.mjs
 APK가 이미 폰에 있을 때. USB·무선 ADB 필요 없음. PC와 폰은 **같은 Wi‑Fi**.
 
 ```bash
-cd jellypage
+cd jelly-page
 npm install          # package.json 바뀌었을 때만
-npm start            # = expo start --dev-client
+npm start            # = expo start --dev-client  (npx start 는 안 됨)
 ```
 
 폰에서 **HEXy 개발 빌드** 실행 → QR 스캔. 안 되면 **Enter URL manually**에 Metro URL.
@@ -96,38 +96,120 @@ Wi‑Fi에서 Metro가 안 붙을 때:
 
 Android 11+ . USB 한 번도 없어도 됩니다. `npm run android` / `adb install` 할 때만 필요합니다.
 
-### 폰
+**PC를 바꾸면** 다른 PC에서 했던 무선 연결은 이어지지 않습니다. 새 PC에서 **§2.2 페어링**을 다시 해야 합니다.
 
-1. 설정 → 휴대전화 정보 → **빌드번호** 7번 탭
-2. 개발자 옵션 → **무선 디버깅** ON
-3. **페어링 코드로 기기 페어링** → IP:포트 + 6자리 코드
-4. 페어링 창을 **닫지 말고** 무선 디버깅 **첫 화면**의 IP:포트도 확인 (숫자가 다름)
+### 2.1 폰에 IP:포트가 **두 개** — 헷갈리지 말 것
 
-페어링용 포트와 연결용 포트는 다릅니다. 예: 페어링 `10.20.1.88:44791`, 연결 `10.20.1.88:39147`.
+무선 디버깅 화면에는 **서로 다른** IP:포트가 두 군데 있습니다.
 
-### PC
+| 어디서 보이나 | 쓰는 명령 | 역할 |
+|---|---|---|
+| **페어링 코드로 기기 페어링** 창 | `adb pair` | 이 PC를 폰에 신뢰 등록 (PC마다 1회) |
+| 무선 디버깅 **첫 화면** (페어링 창 닫으면) | `adb connect` | 실제 ADB 연결 (설치·빌드용) |
+
+**포트 번호가 다릅니다.** 페어링 포트로 `adb connect` 하거나, 연결 포트로 `adb pair` 하면 실패합니다.
+
+예 (같은 폰, 같은 날):
+
+- 페어링: `192.168.219.106:32857` + 코드 `042611`
+- 연결: `192.168.219.106:34785` (`39147`은 연결 거부 — 포트가 바뀐 것)
+
+### 2.2 PC — 순서대로 (PowerShell)
+
+프로젝트 폴더는 어디에 있어도 됩니다. `adb`만 PATH에 있으면 OK.
 
 ```powershell
+cd C:\jelly-page
+
+# 0) ADB 상태 초기화 (protocol fault 나면 필수)
+adb kill-server
+adb start-server
+
+# 1) 페어링 — 폰: 「페어링 코드로 기기 페어링」 창을 열어둔 상태
 adb pair <페어링_IP>:<페어링_포트> <6자리코드>
+# 예: adb pair 192.168.219.106:32857 042611
+
+# 2) 연결 — 페어링 창 닫고, 무선 디버깅 첫 화면의 IP:포트
 adb connect <연결_IP>:<연결_포트>
-adb devices
+# 예: adb connect 192.168.219.106:34785
+
+# 3) 확인 — 아래에 device 한 줄
+adb devices -l
 ```
 
 `device`가 보이면:
 
-```bash
+```powershell
 npm run android
 ```
 
-이미 APK만 있으면:
+이미 APK만 다시 깔 때:
 
 ```powershell
 adb install -r android\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-### 끊김
+### 2.3 `protocol fault` — pair가 실패할 때
 
-무선 디버깅은 화면이 꺼지거나 잠깐 두면 포트가 바뀌고 `offline` / 연결 거부가 납니다. 설치하는 동안 폰을 켜 두고 무선 디버깅 화면을 닫지 마세요. 다시 붙을 때는 **연결용 IP:포트만** 다시 받아 `adb connect` 하면 됩니다. 페어링은 보통 한 번이면 됩니다.
+`adb pair` 후 이런 메시지가 나오면 **명령 형식은 맞을 수 있습니다** (ADB 35.x 알려진 버그):
+
+```
+error: protocol fault (couldn't read status message): No error
+```
+
+**같은 pair 명령을 한 번 더** 실행하세요. 대부분 두 번째에 성공합니다.
+
+```powershell
+adb kill-server
+adb start-server
+adb pair <페어링_IP>:<페어링_포트> <6자리코드>
+# 실패하면 같은 줄을 다시 실행
+```
+
+그래도 안 되면:
+
+- 페어링 창이 **열려 있는지**, 코드가 **만료되지 않았는지** 확인 (창 닫고 새로 열기)
+- PC·폰 **같은 Wi‑Fi**
+- 폰 **VPN 끄기**
+- (삼성 등) Wi‑Fi 설정 → **MAC 주소 무작위화** 끄기
+- 개발자 옵션에서 **USB 디버깅**도 ON (일부 기기)
+
+### 2.4 `adb connect` 연결 거부 — 포트를 못 찾을 때
+
+`연결을 거부했으므로 연결하지 못했습니다` / `offline` → **연결용 포트가 바뀐 것**입니다. 페어링은 성공했어도 connect는 **메인 화면 포트**로 다시 해야 합니다.
+
+페어링 후 PC가 포트를 찾아주는 방법:
+
+```powershell
+adb mdns services
+```
+
+출력 예:
+
+```
+adb-R3CY60F98SX-nq2u7B  _adb-tls-connect._tcp  192.168.219.106:34785
+```
+
+여기 나온 **가장 최근 `_adb-tls-connect` 포트**로 connect:
+
+```powershell
+adb connect 192.168.219.106:34785
+adb devices -l
+```
+
+여러 줄이 나오면 하나씩 시도. `device`가 되는 포트를 씁니다.
+
+### 2.5 끊김
+
+무선 디버깅은 화면이 꺼지거나 잠깐 두면 포트가 바뀌고 `offline` / 연결 거부가 납니다. `npm run android` 하는 동안 폰 화면을 켜 두세요.
+
+다시 붙을 때:
+
+1. 페어링은 **보통 다시 안 함** (같은 PC)
+2. 무선 디버깅 첫 화면에서 **새 연결용 IP:포트** 확인
+3. `adb connect <새_포트>` 또는 `adb mdns services` → connect
+
+`adb devices`가 비어 있으면 `npm run android`는 항상 `No Android connected device` 로 실패합니다.
 
 ---
 
@@ -163,7 +245,9 @@ Android 11+는 **§2**가 더 맞습니다.
 
 ## 4. Windows 첫 빌드가 깨질 때
 
-`No Android connected device` → ADB가 없음. §2 또는 §3.
+`No Android connected device` → `adb devices`가 비어 있음. §2 페어링·연결 또는 §3 USB.
+
+`npx start` / `could not determine executable` → `npm start` 사용 (§1).
 
 경로 260자 (`Filename longer than 260 characters`, 종종 `react-native-worklets` CMake):
 
@@ -224,4 +308,6 @@ APK 설치 후 그 PC에서는 `npm start`만.
 - [ ] 폰에 **개발 빌드** 설치됨 (Expo Go 아님)
 - [ ] 일상: `npm start` → QR 또는 `http://<PC_IP>:8081`
 - [ ] 설치/재빌드: `adb devices` → `device` (USB 또는 무선 디버깅)
-- [ ] 무선: 페어링 포트 ≠ 연결 포트, 설치 중 화면 유지
+- [ ] 무선: `adb pair`(페어링 창) → `adb connect`(첫 화면 또는 `adb mdns services`)
+- [ ] `protocol fault` → `adb kill-server` 후 pair **재시도**
+- [ ] 설치 중 폰 화면 유지

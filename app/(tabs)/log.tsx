@@ -16,6 +16,7 @@ import { useSession } from '@/src/features/auth/session';
 import { listThreads } from '@/src/features/dm/api';
 import { useDock } from '@/src/features/nav/dock';
 import { deleteTake, listMyTakes, publicBlur } from '@/src/features/take/api';
+import { deleteLocalTake, listLocalTakes, type LocalTake } from '@/src/features/take/local-album';
 import type { Take } from '@/src/lib/database.types';
 import { formatClock, formatDateKey, formatTake } from '@/src/lib/format';
 import { queryClient } from '@/src/lib/query';
@@ -31,6 +32,11 @@ export default function LogScreen() {
     queryFn: () => listMyTakes(q),
     enabled: Boolean(session) && pane === 'log',
   });
+  const localQ = useQuery({
+    queryKey: ['local-takes'],
+    queryFn: listLocalTakes,
+    enabled: pane === 'log',
+  });
   const inboxQ = useQuery({
     queryKey: ['inbox'],
     queryFn: listThreads,
@@ -38,26 +44,39 @@ export default function LogScreen() {
   });
 
   const sections = useMemo(() => {
-    const map = new Map<string, Take[]>();
-    for (const t of takesQ.data ?? []) {
-      const key = formatDateKey(t.captured_at);
-      map.set(key, [...(map.get(key) ?? []), t]);
+    const remote = session ? (takesQ.data ?? []) : [];
+    const remoteIds = new Set(remote.map((take) => take.id));
+    const local = (localQ.data ?? [])
+      .filter((take) => !take.remoteId || !remoteIds.has(take.remoteId))
+      .filter((take) => matchesLocalQuery(take, q));
+    const rows: AlbumRow[] = [
+      ...remote.map((take) => ({
+        kind: 'remote' as const,
+        id: take.id,
+        seq: take.seq,
+        capturedAt: take.captured_at,
+        palette: take.palette,
+        photoUri: publicBlur(take.blur_path),
+        take,
+      })),
+      ...local.map((take) => ({
+        kind: 'local' as const,
+        id: take.id,
+        seq: take.seq,
+        capturedAt: take.capturedAt,
+        palette: take.palette,
+        photoUri: take.photoUri,
+        take,
+      })),
+    ].sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
+
+    const map = new Map<string, AlbumRow[]>();
+    for (const row of rows) {
+      const key = formatDateKey(row.capturedAt);
+      map.set(key, [...(map.get(key) ?? []), row]);
     }
     return [...map.entries()].map(([title, data]) => ({ title, data }));
-  }, [takesQ.data]);
-
-  if (!session) {
-    return (
-      <Screen>
-        <View style={{ padding: 16, flexDirection: 'row', justifyContent: 'flex-end' }}>
-          <MeMark />
-        </View>
-        <View style={{ padding: 24 }}>
-          <Tap label="AUTH" onPress={() => router.push('/(auth)')} />
-        </View>
-      </Screen>
-    );
-  }
+  }, [localQ.data, q, session, takesQ.data]);
 
   return (
     <Screen>
@@ -69,7 +88,7 @@ export default function LogScreen() {
           alignItems: 'center',
         }}
       >
-        <CamSwitch label="LOG" on={pane === 'log'} onPress={() => setPane('log')} />
+        <CamSwitch label="ALBUM" on={pane === 'log'} onPress={() => setPane('log')} />
         <View style={{ width: 8 }} />
         <CamSwitch label="INBOX" on={pane === 'inbox'} onPress={() => setPane('inbox')} />
         <View style={{ flex: 1 }} />
@@ -77,6 +96,18 @@ export default function LogScreen() {
       </View>
       {pane === 'log' ? (
         <>
+          {!session ? (
+            <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+              <Well style={{ gap: 8 }}>
+                <MonoText>SIGN IN TO FIND PHOTOS WITH SIMILAR COLORS</MonoText>
+                <MonoText dim size={11}>YOUR LOCAL ALBUM STAYS ON THIS DEVICE</MonoText>
+                <Tap
+                  label="SIGN IN"
+                  onPress={() => router.push({ pathname: '/(auth)', params: { next: 'log' } })}
+                />
+              </Well>
+            </View>
+          ) : null}
           <View style={{ paddingHorizontal: 16 }}>
             <Field
               value={q}
@@ -96,16 +127,38 @@ export default function LogScreen() {
             )}
             renderItem={({ item }) => (
               <LogRow
-                take={item}
-                onOpen={() => router.push(`/take/${item.id}`)}
+                row={item}
+                onOpen={() =>
+                  item.kind === 'local'
+                    ? router.push({ pathname: '/local/[id]', params: { id: item.id } } as never)
+                    : router.push(`/take/${item.id}`)
+                }
                 onDelete={async () => {
-                  await deleteTake(item.id, item.owner_id);
-                  await queryClient.invalidateQueries({ queryKey: ['takes'] });
+                  if (item.kind === 'local') {
+                    await deleteLocalTake(item.id);
+                    await queryClient.invalidateQueries({ queryKey: ['local-takes'] });
+                  } else {
+                    await deleteTake(item.id, item.take.owner_id);
+                    await queryClient.invalidateQueries({ queryKey: ['takes'] });
+                  }
                 }}
               />
             )}
+            ListEmptyComponent={
+              <View style={{ paddingVertical: 32 }}>
+                <MonoText dim>NO SAVED TAKES</MonoText>
+              </View>
+            }
           />
         </>
+      ) : !session ? (
+        <View style={{ padding: 24, gap: 12 }}>
+          <MonoText>SIGN IN TO SEE MATCHES AND DM</MonoText>
+          <Tap
+            label="SIGN IN"
+            onPress={() => router.push({ pathname: '/(auth)', params: { next: 'log' } })}
+          />
+        </View>
       ) : (
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, gap: 12 }}>
           {(inboxQ.data ?? []).map((th) => (
@@ -127,9 +180,39 @@ export default function LogScreen() {
   );
 }
 
-function LogRow({ take, onOpen, onDelete }: { take: Take; onOpen: () => void; onDelete: () => void }) {
+type AlbumRow =
+  | {
+      kind: 'remote';
+      id: string;
+      seq: number;
+      capturedAt: string;
+      palette: Take['palette'];
+      photoUri: string | null;
+      take: Take;
+    }
+  | {
+      kind: 'local';
+      id: string;
+      seq: number;
+      capturedAt: string;
+      palette: LocalTake['palette'];
+      photoUri: string;
+      take: LocalTake;
+    };
+
+function matchesLocalQuery(take: LocalTake, query: string) {
+  const normalized = query.trim().toUpperCase();
+  if (!normalized) return true;
+  const hex = take.palette.map((color) => color.hex).join(' ');
+  return (
+    take.capturedAt.slice(0, 10).includes(normalized) ||
+    hex.includes(normalized) ||
+    String(take.seq).includes(normalized)
+  );
+}
+
+function LogRow({ row, onOpen, onDelete }: { row: AlbumRow; onOpen: () => void; onDelete: () => void }) {
   const [startX, setStartX] = useState<number | null>(null);
-  const thumb = publicBlur(take.blur_path);
   return (
     <View
       onStartShouldSetResponder={() => true}
@@ -151,9 +234,10 @@ function LogRow({ take, onOpen, onDelete }: { take: Take; onOpen: () => void; on
         }}
       >
         <View style={{ flex: 1 }}>
-          <ChipStrip colors={take.palette} height={10} />
+          <ChipStrip colors={row.palette} height={10} />
           <MonoText size={12} style={{ marginTop: 6 }}>
-            {formatTake(take.seq)}  {formatClock(take.captured_at)}
+            {formatTake(row.seq)}  {formatClock(row.capturedAt)}{'  '}
+            {row.kind === 'local' ? row.take.syncState.toUpperCase() : 'CLOUD'}
           </MonoText>
         </View>
         <View
@@ -170,8 +254,8 @@ function LogRow({ take, onOpen, onDelete }: { take: Take; onOpen: () => void; on
             elevation: 3,
           }}
         >
-          {thumb ? (
-            <Image source={{ uri: thumb }} style={{ flex: 1 }} contentFit="cover" />
+          {row.photoUri ? (
+            <Image source={{ uri: row.photoUri }} style={{ flex: 1 }} contentFit="cover" />
           ) : (
             <View style={{ flex: 1, backgroundColor: colors.line }} />
           )}
