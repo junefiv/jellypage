@@ -116,37 +116,38 @@ Android 11+ . USB 한 번도 없어도 됩니다. `npm run android` / `adb insta
 
 ### 2.2 PC — 순서대로 (PowerShell)
 
-프로젝트 폴더는 어디에 있어도 됩니다. `adb`만 PATH에 있으면 OK.
+이 PC는 `adb`가 PATH에 없습니다. **맨 위 `$adb = ...` 한 줄을 먼저** 실행하세요. 그다음부터는 `$adb`만 씁니다.
 
 ```powershell
-cd C:\jelly-page
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 
 # 0) ADB 상태 초기화 (protocol fault 나면 필수)
-adb kill-server
-adb start-server
+& $adb kill-server
+& $adb start-server
 
 # 1) 페어링 — 폰: 「페어링 코드로 기기 페어링」 창을 열어둔 상태
-adb pair <페어링_IP>:<페어링_포트> <6자리코드>
-# 예: adb pair 192.168.219.106:32857 042611
+& $adb pair <페어링_IP>:<페어링_포트> <6자리코드>
+# 예: & $adb pair 192.168.219.106:32857 042611
 
 # 2) 연결 — 페어링 창 닫고, 무선 디버깅 첫 화면의 IP:포트
-adb connect <연결_IP>:<연결_포트>
-# 예: adb connect 192.168.219.106:34785
+& $adb connect <연결_IP>:<연결_포트>
+# 예: & $adb connect 192.168.219.106:34785
 
 # 3) 확인 — 아래에 device 한 줄
-adb devices -l
+& $adb devices -l
 ```
 
 `device`가 보이면:
 
 ```powershell
+cd C:\jellypage
 npm run android
 ```
 
 이미 APK만 다시 깔 때:
 
 ```powershell
-adb install -r android\app\build\outputs\apk\debug\app-debug.apk
+& $adb install -r android\app\build\outputs\apk\debug\app-debug.apk
 ```
 
 ### 2.3 `protocol fault` — pair가 실패할 때
@@ -160,9 +161,10 @@ error: protocol fault (couldn't read status message): No error
 **같은 pair 명령을 한 번 더** 실행하세요. 대부분 두 번째에 성공합니다.
 
 ```powershell
-adb kill-server
-adb start-server
-adb pair <페어링_IP>:<페어링_포트> <6자리코드>
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+& $adb kill-server
+& $adb start-server
+& $adb pair <페어링_IP>:<페어링_포트> <6자리코드>
 # 실패하면 같은 줄을 다시 실행
 ```
 

@@ -36,6 +36,7 @@ const config: ExpoConfig = {
     'expo-dev-client',
     'expo-router',
     'expo-secure-store',
+    'expo-sensors',
     [
       'expo-splash-screen',
       {

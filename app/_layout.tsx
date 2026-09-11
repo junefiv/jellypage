@@ -6,6 +6,7 @@ import { DarkTheme, ThemeProvider } from 'expo-router/react-navigation';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 
 import { useSession } from '@/src/features/auth/session';
 import { syncLocalAlbum } from '@/src/features/take/sync-local-album';
@@ -59,6 +60,7 @@ export default function RootLayout() {
   if (!loaded || !ready) return null;
 
   return (
+    <View style={{ flex: 1 }}>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={navTheme}>
         <StatusBar style="light" />
@@ -84,5 +86,6 @@ export default function RootLayout() {
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>
+    </View>
   );
 }

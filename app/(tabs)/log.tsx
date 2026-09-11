@@ -1,11 +1,10 @@
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, SectionList, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 
+import { AlbumScatter } from '@/src/components/ui/AlbumScatter';
 import { CamSwitch } from '@/src/components/ui/CamSwitch';
-import { ChipStrip } from '@/src/components/ui/ChipStrip';
 import { Field } from '@/src/components/ui/Field';
 import { MeMark } from '@/src/components/ui/MeMark';
 import { MonoText } from '@/src/components/ui/MonoText';
@@ -18,15 +17,22 @@ import { useDock } from '@/src/features/nav/dock';
 import { deleteTake, listMyTakes, publicBlur } from '@/src/features/take/api';
 import { deleteLocalTake, listLocalTakes, type LocalTake } from '@/src/features/take/local-album';
 import type { Take } from '@/src/lib/database.types';
-import { formatClock, formatDateKey, formatTake } from '@/src/lib/format';
 import { queryClient } from '@/src/lib/query';
-import { colors } from '@/src/theme/tokens';
 
 export default function LogScreen() {
   const session = useSession((s) => s.session);
   const pane = useDock((s) => s.pane);
   const setPane = useDock((s) => s.setPane);
+  const albumReplay = useDock((s) => s.albumReplay);
+  const bumpAlbumReplay = useDock((s) => s.bumpAlbumReplay);
   const [q, setQ] = useState('');
+
+  const wasInbox = useRef(pane === 'inbox');
+  useEffect(() => {
+    if (wasInbox.current && pane === 'log') bumpAlbumReplay();
+    wasInbox.current = pane === 'inbox';
+  }, [bumpAlbumReplay, pane]);
+
   const takesQ = useQuery({
     queryKey: ['takes', q],
     queryFn: () => listMyTakes(q),
@@ -43,17 +49,16 @@ export default function LogScreen() {
     enabled: Boolean(session) && pane === 'inbox',
   });
 
-  const sections = useMemo(() => {
+  const rows = useMemo(() => {
     const remote = session ? (takesQ.data ?? []) : [];
     const remoteIds = new Set(remote.map((take) => take.id));
     const local = (localQ.data ?? [])
       .filter((take) => !take.remoteId || !remoteIds.has(take.remoteId))
       .filter((take) => matchesLocalQuery(take, q));
-    const rows: AlbumRow[] = [
+    const merged: AlbumRow[] = [
       ...remote.map((take) => ({
         kind: 'remote' as const,
         id: take.id,
-        seq: take.seq,
         capturedAt: take.captured_at,
         palette: take.palette,
         photoUri: publicBlur(take.blur_path),
@@ -62,21 +67,39 @@ export default function LogScreen() {
       ...local.map((take) => ({
         kind: 'local' as const,
         id: take.id,
-        seq: take.seq,
         capturedAt: take.capturedAt,
         palette: take.palette,
         photoUri: take.photoUri,
         take,
       })),
     ].sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
-
-    const map = new Map<string, AlbumRow[]>();
-    for (const row of rows) {
-      const key = formatDateKey(row.capturedAt);
-      map.set(key, [...(map.get(key) ?? []), row]);
-    }
-    return [...map.entries()].map(([title, data]) => ({ title, data }));
+    return merged;
   }, [localQ.data, q, session, takesQ.data]);
+
+  const scatterItems = useMemo(
+    () =>
+      rows.map((row) => ({
+        id: row.id,
+        photoUri: row.photoUri,
+        palette: row.palette,
+        capturedAt: row.capturedAt,
+        geo: row.take.city,
+        onOpen: () =>
+          row.kind === 'local'
+            ? router.push({ pathname: '/local/[id]', params: { id: row.id } } as never)
+            : router.push(`/take/${row.id}`),
+        onLongPress: async () => {
+          if (row.kind === 'local') {
+            await deleteLocalTake(row.id);
+            await queryClient.invalidateQueries({ queryKey: ['local-takes'] });
+          } else {
+            await deleteTake(row.id, row.take.owner_id);
+            await queryClient.invalidateQueries({ queryKey: ['takes'] });
+          }
+        },
+      })),
+    [rows],
+  );
 
   return (
     <Screen>
@@ -108,7 +131,7 @@ export default function LogScreen() {
               </Well>
             </View>
           ) : null}
-          <View style={{ paddingHorizontal: 16 }}>
+          <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
             <Field
               value={q}
               onChangeText={setQ}
@@ -116,40 +139,7 @@ export default function LogScreen() {
               autoCapitalize="characters"
             />
           </View>
-          <SectionList
-            sections={sections}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ padding: 16, paddingBottom: 120, gap: 8 }}
-            renderSectionHeader={({ section }) => (
-              <MonoText dim style={{ marginTop: 12 }}>
-                {section.title}
-              </MonoText>
-            )}
-            renderItem={({ item }) => (
-              <LogRow
-                row={item}
-                onOpen={() =>
-                  item.kind === 'local'
-                    ? router.push({ pathname: '/local/[id]', params: { id: item.id } } as never)
-                    : router.push(`/take/${item.id}`)
-                }
-                onDelete={async () => {
-                  if (item.kind === 'local') {
-                    await deleteLocalTake(item.id);
-                    await queryClient.invalidateQueries({ queryKey: ['local-takes'] });
-                  } else {
-                    await deleteTake(item.id, item.take.owner_id);
-                    await queryClient.invalidateQueries({ queryKey: ['takes'] });
-                  }
-                }}
-              />
-            )}
-            ListEmptyComponent={
-              <View style={{ paddingVertical: 32 }}>
-                <MonoText dim>NO SAVED TAKES</MonoText>
-              </View>
-            }
-          />
+          <AlbumScatter items={scatterItems} replayKey={albumReplay} />
         </>
       ) : !session ? (
         <View style={{ padding: 24, gap: 12 }}>
@@ -184,7 +174,6 @@ type AlbumRow =
   | {
       kind: 'remote';
       id: string;
-      seq: number;
       capturedAt: string;
       palette: Take['palette'];
       photoUri: string | null;
@@ -193,7 +182,6 @@ type AlbumRow =
   | {
       kind: 'local';
       id: string;
-      seq: number;
       capturedAt: string;
       palette: LocalTake['palette'];
       photoUri: string;
@@ -208,59 +196,5 @@ function matchesLocalQuery(take: LocalTake, query: string) {
     take.capturedAt.slice(0, 10).includes(normalized) ||
     hex.includes(normalized) ||
     String(take.seq).includes(normalized)
-  );
-}
-
-function LogRow({ row, onOpen, onDelete }: { row: AlbumRow; onOpen: () => void; onDelete: () => void }) {
-  const [startX, setStartX] = useState<number | null>(null);
-  return (
-    <View
-      onStartShouldSetResponder={() => true}
-      onMoveShouldSetResponder={() => true}
-      onResponderGrant={(e) => setStartX(e.nativeEvent.pageX)}
-      onResponderRelease={(e) => {
-        if (startX != null && e.nativeEvent.pageX - startX < -72) onDelete();
-        setStartX(null);
-      }}
-    >
-      <Pressable
-        onPress={onOpen}
-        onLongPress={onDelete}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          paddingVertical: 8,
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <ChipStrip colors={row.palette} height={10} />
-          <MonoText size={12} style={{ marginTop: 6 }}>
-            {formatTake(row.seq)}  {formatClock(row.capturedAt)}{'  '}
-            {row.kind === 'local' ? row.take.syncState.toUpperCase() : 'CLOUD'}
-          </MonoText>
-        </View>
-        <View
-          style={{
-            width: 44,
-            height: 52,
-            backgroundColor: colors.paper,
-            padding: 4,
-            paddingBottom: 8,
-            shadowColor: '#000',
-            shadowOpacity: 0.35,
-            shadowRadius: 4,
-            shadowOffset: { width: 0, height: 2 },
-            elevation: 3,
-          }}
-        >
-          {row.photoUri ? (
-            <Image source={{ uri: row.photoUri }} style={{ flex: 1 }} contentFit="cover" />
-          ) : (
-            <View style={{ flex: 1, backgroundColor: colors.line }} />
-          )}
-        </View>
-      </Pressable>
-    </View>
   );
 }

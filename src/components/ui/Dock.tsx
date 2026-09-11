@@ -27,6 +27,7 @@ export function Dock({ state, navigation }: Props) {
   const side = Math.max(insets.right, 16) + SIDE_PAD;
   const shoot = useDock((s) => s.shoot);
   const shooting = useDock((s) => s.shooting);
+  const bumpAlbumReplay = useDock((s) => s.bumpAlbumReplay);
   const route = state.routes[state.index]?.name;
   const onCam = route === 'cam';
   const [tone, setTone] = useState(() => nextChip());
@@ -112,7 +113,10 @@ export function Dock({ state, navigation }: Props) {
               onChange={(next) => {
                 setTone((cur) => nextChip(cur));
                 if (next === 'cam') navigation.navigate('cam');
-                else navigation.navigate('log');
+                else {
+                  bumpAlbumReplay();
+                  navigation.navigate('log');
+                }
               }}
             />
           </View>
