@@ -1,0 +1,28 @@
+---
+description: HEXy UI must use Jelly UI v1.1. Read docs/JELLY_UI.md before any screen or control work.
+alwaysApply: true
+---
+
+# Jelly UI v1.1
+
+Design and implement chrome from **Jelly UI v1.1** only. Full map: `docs/JELLY_UI.md`. Source: `vendor/jelly-ui/jelly.js`.
+
+## Do
+
+- Interactive chrome = Jelly custom elements (`jelly-button`, `jelly-input`, `jelly-alert`, …).
+- New control: wrap in `src/components/jelly/*.dom.tsx` (`'use dom'`) then expose a RN host in `src/components/ui/`. Do not drop raw `<jelly-*>` in Expo routes.
+- Theme: `<jelly-theme mode="dark">`. Never `light`. Accent via `colors` / `--jelly-fill`, not ad-hoc hex on RN `View`.
+- Variants: `white|rose|amber|azure|mint|platinum|graphite`. HEXy fills come from `src/theme/tokens.ts` (`btnOn`, `btnBack`, …) through `--jelly-fill` + `inkOn()`.
+- Size names: `small|medium|large` (aliases `sm|md|lg` ok). Set attrs with `applyJellyAttrs` — never assign props that collide with jelly methods (`shape()`).
+- Load once: `loadJelly()` from `vendor/jelly-ui/jelly.js`. Dev client only. Expo Go cannot paint Jelly.
+
+## Do not
+
+- Invent RN `Pressable` / `Switch` / `TextInput` / `Alert.alert` for product chrome when a Jelly tag exists.
+- Add a Jelly component HEXy banned in `docs/JELLY_UI.md` (pagination, breadcrumbs, kbd, toaster rail, resizable).
+- Bypass wrappers for one-off DOM in `app/**`.
+- Use jelly `mode="auto"` or OS light theme.
+
+## Native exceptions (not Jelly)
+
+Camera preview, Dock shutter physics, `GlassToggle` SVG, `AlbumScatter` layout, `TakeFrame` photo. Those stay RN. Buttons/fields/alerts on top of them stay Jelly.

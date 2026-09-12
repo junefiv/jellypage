@@ -176,7 +176,7 @@ export function AlbumLiftOverlay({
         pointerEvents="box-none"
       >
         <View style={{ paddingHorizontal: 16, marginBottom: 10 }}>
-          <Tap label={copy.back} onPress={close} />
+          <Tap label={copy.back} role="back" onPress={close} />
         </View>
         <TakeFrame
           photoUri={photoUri}

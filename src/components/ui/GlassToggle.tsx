@@ -173,7 +173,7 @@ export function GlassToggle({ side, tone, onChange }: Props) {
       <Pressable
         accessibilityRole="switch"
         accessibilityState={{ checked: side === 'log' }}
-        accessibilityLabel="CAM LOG"
+        accessibilityLabel="카메라 · 로그"
         onPress={() => pick(side === 'cam' ? 'log' : 'cam')}
         style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}
       />

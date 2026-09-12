@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 
+import { AlertHost } from '@/src/components/ui/AlertHost';
 import { useSession } from '@/src/features/auth/session';
 import { syncLocalAlbum } from '@/src/features/take/sync-local-album';
 import { queryClient } from '@/src/lib/query';
@@ -61,31 +62,32 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={navTheme}>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.bg },
-            animation: 'fade',
-          }}
-        >
-          <Stack.Screen name="(onboarding)" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="me" />
-          <Stack.Screen name="take/[id]" />
-          <Stack.Screen name="local/[id]" />
-          <Stack.Screen name="take/preview" />
-          <Stack.Screen name="match/[id]" />
-          <Stack.Screen name="open/[takeId]" />
-          <Stack.Screen name="close/[takeId]" />
-          <Stack.Screen name="user/[handle]" />
-          <Stack.Screen name="dm/[threadId]" />
-        </Stack>
-      </ThemeProvider>
-    </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={navTheme}>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.bg },
+              animation: 'fade',
+            }}
+          >
+            <Stack.Screen name="(onboarding)" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="me" />
+            <Stack.Screen name="take/[id]" />
+            <Stack.Screen name="local/[id]" />
+            <Stack.Screen name="take/preview" />
+            <Stack.Screen name="match/[id]" />
+            <Stack.Screen name="open/[takeId]" />
+            <Stack.Screen name="close/[takeId]" />
+            <Stack.Screen name="user/[handle]" />
+            <Stack.Screen name="dm/[threadId]" />
+          </Stack>
+        </ThemeProvider>
+        <AlertHost />
+      </QueryClientProvider>
     </View>
   );
 }

@@ -7,14 +7,16 @@ import { MonoText } from '@/src/components/ui/MonoText';
 import { Screen } from '@/src/components/ui/Screen';
 import { TakeFrame } from '@/src/components/ui/TakeFrame';
 import { Tap } from '@/src/components/ui/Tap';
+import { showAlert } from '@/src/features/alert/alert';
 import { useSession } from '@/src/features/auth/session';
 import { useDraft } from '@/src/features/cam/draft';
 import { persistTake } from '@/src/features/take/api';
 import { saveLocalTake } from '@/src/features/take/local-album';
 import { syncLocalAlbum } from '@/src/features/take/sync-local-album';
 import { formatTake } from '@/src/lib/format';
+import { msg, msgError } from '@/src/lib/messages';
 import { queryClient } from '@/src/lib/query';
-import { chip, copy, pickActionChips } from '@/src/theme/tokens';
+import { chip, colors, copy, pickActionChips } from '@/src/theme/tokens';
 
 const PAD = 30;
 const GAP = 1;
@@ -41,6 +43,10 @@ export default function TakePreview() {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    if (draft && !session) showAlert(msg.saveAlbumSignIn);
+  }, [draft, session]);
+
   async function persist() {
     if (!draft || started.current) return;
     if (!session) {
@@ -54,7 +60,7 @@ export default function TakePreview() {
       router.replace(`/take/${take.id}`);
     } catch (e) {
       started.current = false;
-      setErr(e instanceof Error ? e.message : 'TAKE');
+      setErr(msgError(e instanceof Error ? e.message : msg.takeFail));
     } finally {
       setBusy(false);
     }
@@ -73,7 +79,7 @@ export default function TakePreview() {
       router.replace('/(tabs)/log');
     } catch (e) {
       started.current = false;
-      setErr(e instanceof Error ? e.message : 'SAVE');
+      setErr(msgError(e instanceof Error ? e.message : msg.saveFail));
     } finally {
       setBusy(false);
     }
@@ -105,7 +111,7 @@ export default function TakePreview() {
               onPress={discard}
               style={{ position: 'absolute', left: PAD, top: 0, zIndex: 30 }}
             >
-              <MonoText dim={busy}>← BACK</MonoText>
+              <MonoText dim={busy} style={{ color: colors.btnBack }}>← BACK</MonoText>
             </Pressable>
             <MonoText size={20} style={{ color: tones.take }}>
               {seq ? formatTake(seq) : 'TAKE ----'}
@@ -128,13 +134,6 @@ export default function TakePreview() {
         {err ? (
           <View style={{ paddingHorizontal: PAD, paddingBottom: 6 }}>
             <MonoText style={{ color: chip.pink }}>{err}</MonoText>
-          </View>
-        ) : null}
-        {!session ? (
-          <View style={{ paddingHorizontal: PAD, paddingBottom: 2 }}>
-            <MonoText dim size={11}>
-              SAVE TO ALBUM · SIGN IN TO FIND PHOTOS WITH SIMILAR COLORS
-            </MonoText>
           </View>
         ) : null}
         <View

@@ -12,6 +12,7 @@ import { listBlocks, listFollowing } from '@/src/features/follow/api';
 import { updateDefaultMatchPublic } from '@/src/features/profile/api';
 import { listMyTakes } from '@/src/features/take/api';
 import { restorePurchaseCheck } from '@/src/lib/iap';
+import { msg } from '@/src/lib/messages';
 import { colors, copy } from '@/src/theme/tokens';
 
 export default function MeScreen() {
@@ -47,7 +48,7 @@ export default function MeScreen() {
     return (
       <Screen>
         <View style={{ padding: 16 }}>
-          <Tap label={copy.back} onPress={() => router.back()} />
+          <Tap label={copy.back} role="back" onPress={() => router.back()} />
         </View>
         <View style={{ padding: 24 }}>
           <Tap label="AUTH" onPress={() => router.push('/(auth)')} />
@@ -59,7 +60,7 @@ export default function MeScreen() {
   return (
     <Screen>
       <View style={{ padding: 16, gap: 14 }}>
-        <Tap label={copy.back} onPress={() => router.back()} />
+        <Tap label={copy.back} role="back" onPress={() => router.back()} />
         <Well>
           <MonoText size={18}>@{profile?.handle ?? '—'}</MonoText>
           {latest ? <ChipStrip colors={latest.palette} /> : null}
@@ -71,7 +72,7 @@ export default function MeScreen() {
               marginTop: 12,
             }}
           >
-            <MonoText>MATCH PUBLIC</MonoText>
+            <MonoText>{msg.matchPublic}</MonoText>
             <Switch
               value={profile?.default_match_public ?? true}
               onValueChange={async (v) => {
@@ -82,9 +83,9 @@ export default function MeScreen() {
             />
           </View>
           <MonoText dim style={{ marginTop: 10 }}>
-            FOLLOWING  {followQ.data?.length ?? 0}
+            {msg.following(followQ.data?.length ?? 0)}
           </MonoText>
-          <MonoText dim>BLOCK  {blockQ.data?.length ?? 0}</MonoText>
+          <MonoText dim>{msg.block(blockQ.data?.length ?? 0)}</MonoText>
         </Well>
         <Tap label={`IAP  ${iapQ.data?.paid ?? 0}`} onPress={() => void iapQ.refetch()} />
         <Tap label="OUT" dim onPress={() => void signOut()} />

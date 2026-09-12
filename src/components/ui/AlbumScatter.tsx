@@ -12,6 +12,7 @@ import Animated, {
 import { AlbumLiftOverlay, type LiftSource } from '@/src/components/ui/AlbumLiftOverlay';
 import { AlbumPolaroid, POLAROID_H, POLAROID_W } from '@/src/components/ui/AlbumPolaroid';
 import { MonoText } from '@/src/components/ui/MonoText';
+import { msg } from '@/src/lib/messages';
 import {
   canvasView,
   offscreenSpawn,
@@ -34,6 +35,7 @@ export type AlbumScatterItem = {
 type Props = {
   items: AlbumScatterItem[];
   replayKey: number;
+  empty?: ReactNode;
 };
 
 const HOLD = 420;
@@ -68,7 +70,7 @@ function viewOrigin(e: { nativeEvent: { pageX: number; pageY: number; locationX:
   };
 }
 
-export function AlbumScatter({ items, replayKey }: Props) {
+export function AlbumScatter({ items, replayKey, empty }: Props) {
   const { width: vw, height: vh } = Dimensions.get('window');
   const slots = useMemo(() => scatterLayout(items.map((i) => i.id), replayKey), [items, replayKey]);
   const bounds = useMemo(() => scatterBounds(slots), [slots]);
@@ -258,8 +260,17 @@ export function AlbumScatter({ items, replayKey }: Props) {
 
   if (!items.length) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 48 }}>
-        <MonoText dim>NO SAVED TAKES</MonoText>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 48,
+          paddingHorizontal: 16,
+          width: '100%',
+        }}
+      >
+        {empty ?? <MonoText dim>{msg.noSavedTakes}</MonoText>}
       </View>
     );
   }

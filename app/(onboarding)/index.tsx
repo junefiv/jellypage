@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import { MonoText } from '@/src/components/ui/MonoText';
 import { Screen } from '@/src/components/ui/Screen';
 import { Tap } from '@/src/components/ui/Tap';
+import { msg } from '@/src/lib/messages';
 
 export default function OnboardingScreen() {
   const [cam, requestCam] = useCameraPermissions();
@@ -21,7 +22,7 @@ export default function OnboardingScreen() {
     <Screen>
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 16 }}>
         <MonoText size={22}>HEXy</MonoText>
-        <MonoText dim>CAM</MonoText>
+        <MonoText dim>{msg.onboardingTag}</MonoText>
         <Tap
           label="CAM"
           onPress={async () => {

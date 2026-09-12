@@ -4,6 +4,7 @@ import Animated, { interpolate, type SharedValue, useAnimatedStyle } from 'react
 import JellyShutterDom from '@/src/components/jelly/JellyShutter.dom';
 import { jellyDom } from '@/src/components/jelly/domProps';
 import { SHUTTER_FRAME } from '@/src/components/ui/shutterConstants';
+import { colors } from '@/src/theme/tokens';
 
 type Props = {
   busy?: boolean;
@@ -12,7 +13,7 @@ type Props = {
   onPress?: () => void;
 };
 
-export function ShutterDisc({ busy, tone = '#E8E8E8', enter, onPress }: Props) {
+export function ShutterDisc({ busy, tone = colors.fg, enter, onPress }: Props) {
   const handlePress = useCallback(async () => {
     onPress?.();
   }, [onPress]);

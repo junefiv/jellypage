@@ -15,6 +15,7 @@ import { canSend, listMessages, sendDm, subscribeMessages } from '@/src/features
 import { listMyTakes, publicBlur } from '@/src/features/take/api';
 import { purchaseDmUnlock } from '@/src/lib/iap';
 import type { DmMessage } from '@/src/lib/database.types';
+import { msg, msgError } from '@/src/lib/messages';
 import { colors, copy } from '@/src/theme/tokens';
 
 export default function DmThread() {
@@ -64,12 +65,12 @@ export default function DmThread() {
     if (!gate.ok && gate.reason === 'needs_unlock') {
       const pay = await purchaseDmUnlock(peer);
       if (!pay.ok) {
-        setErr(pay.error ?? 'IAP');
+        setErr(msgError(pay.error ?? 'IAP'));
         return;
       }
     }
     if (!gate.ok) {
-      setErr(gate.reason);
+      setErr(msgError(gate.reason));
       return;
     }
     await sendDm(peer, body, attach);
@@ -95,7 +96,7 @@ export default function DmThread() {
         {unpaid ? (
           <MonoText style={{ marginBottom: 8 }}>{copy.firstDm}</MonoText>
         ) : null}
-        {attach ? <MonoText dim>TAKE  {attach.slice(0, 8)}</MonoText> : null}
+        {attach ? <MonoText dim>{msg.attachTake(attach)}</MonoText> : null}
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
           <Field value={body} onChangeText={setBody} placeholder="…" wrapStyle={{ flex: 1 }} />
           <Tap label="TAKE" dim onPress={() => setPick((v) => !v)} />

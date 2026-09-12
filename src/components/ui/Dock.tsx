@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react';
-import { AccessibilityInfo, View } from 'react-native';
-import { useSharedValue, withSpring } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect, useState } from "react";
+import { AccessibilityInfo, View } from "react-native";
+import { useSharedValue, withSpring } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { GlassToggle } from '@/src/components/ui/GlassToggle';
-import { ShutterDisc } from '@/src/components/ui/ShutterDisc';
-import { JELLY_OUT, JELLY_WOBBLE } from '@/src/components/ui/jelly';
-import { SHUTTER_FRAME } from '@/src/components/ui/shutterConstants';
-import { useDock } from '@/src/features/nav/dock';
-import { nextChip } from '@/src/theme/tokens';
+import { GlassToggle } from "@/src/components/ui/GlassToggle";
+import { ShutterDisc } from "@/src/components/ui/ShutterDisc";
+import { JELLY_OUT, JELLY_WOBBLE } from "@/src/components/ui/jelly";
+import { SHUTTER_FRAME } from "@/src/components/ui/shutterConstants";
+import { useDock } from "@/src/features/nav/dock";
+import { colors, nextChip } from "@/src/theme/tokens";
 
 const ROW_H = 76;
-const LIFT = 60;
-const SIDE_PAD = 30;
+const LIFT = 70;
+const TOGGLE_SIDE = 24;
 const HIDE_MS = 520;
 const SHUTTER_LIFT = Math.max(0, (SHUTTER_FRAME - ROW_H) / 2);
 
@@ -24,20 +24,23 @@ type Props = {
 export function Dock({ state, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const bottom = Math.max(insets.bottom, 12) + LIFT;
-  const side = Math.max(insets.right, 16) + SIDE_PAD;
+  const side = insets.right + TOGGLE_SIDE;
   const shoot = useDock((s) => s.shoot);
   const shooting = useDock((s) => s.shooting);
   const bumpAlbumReplay = useDock((s) => s.bumpAlbumReplay);
   const route = state.routes[state.index]?.name;
-  const onCam = route === 'cam';
-  const [tone, setTone] = useState(() => nextChip());
+  const onCam = route === "cam";
+  const [tone, setTone] = useState(() => colors.btnDock);
   const [reduce, setReduce] = useState(false);
   const [live, setLive] = useState(onCam);
   const enter = useSharedValue(onCam ? 1 : 0);
 
   useEffect(() => {
     void AccessibilityInfo.isReduceMotionEnabled().then(setReduce);
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduce);
+    const sub = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduce,
+    );
     return () => sub.remove();
   }, []);
 
@@ -62,31 +65,34 @@ export function Dock({ state, navigation }: Props) {
   }, [onCam, reduce, enter]);
 
   return (
-    <View pointerEvents="box-none" style={{ height: 0, backgroundColor: 'transparent' }}>
+    <View
+      pointerEvents="box-none"
+      style={{ height: 0, backgroundColor: "transparent" }}
+    >
       <View
         pointerEvents="box-none"
         style={{
-          position: 'absolute',
+          position: "absolute",
           left: 0,
           right: 0,
           bottom: 0,
           paddingBottom: bottom,
-          backgroundColor: 'transparent',
+          backgroundColor: "transparent",
         }}
       >
         <View pointerEvents="box-none" style={{ height: ROW_H }}>
           {live ? (
             <View
-              pointerEvents={onCam ? 'auto' : 'none'}
+              pointerEvents={onCam ? "auto" : "none"}
               style={{
-                position: 'absolute',
+                position: "absolute",
                 left: 0,
                 right: 0,
                 top: -SHUTTER_LIFT,
                 height: SHUTTER_FRAME,
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'visible',
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "visible",
               }}
             >
               <ShutterDisc
@@ -100,22 +106,22 @@ export function Dock({ state, navigation }: Props) {
           <View
             pointerEvents="box-none"
             style={{
-              position: 'absolute',
+              position: "absolute",
               right: side,
               top: 0,
               height: ROW_H,
-              justifyContent: 'center',
+              justifyContent: "center",
             }}
           >
             <GlassToggle
-              side={onCam ? 'cam' : 'log'}
+              side={onCam ? "cam" : "log"}
               tone={tone}
               onChange={(next) => {
                 setTone((cur) => nextChip(cur));
-                if (next === 'cam') navigation.navigate('cam');
+                if (next === "cam") navigation.navigate("cam");
                 else {
                   bumpAlbumReplay();
-                  navigation.navigate('log');
+                  navigation.navigate("log");
                 }
               }}
             />

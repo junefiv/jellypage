@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import JellyButtonDom from '@/src/components/jelly/JellyButton.dom';
 import { jellyDom } from '@/src/components/jelly/domProps';
+import { colors } from '@/src/theme/tokens';
 
 export function MeMark({ inset }: { inset?: boolean }) {
   const insets = useSafeAreaInsets();
@@ -18,7 +19,8 @@ export function MeMark({ inset }: { inset?: boolean }) {
       <JellyButtonDom
         {...jellyDom()}
         label="ME"
-        active
+        active={false}
+        fill={colors.btnOn}
         size="sm"
         onPress={async () => router.push('/me')}
       />

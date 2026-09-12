@@ -10,6 +10,7 @@ import { signInWithGoogle } from '@/src/features/auth/google';
 import { useSession } from '@/src/features/auth/session';
 import { persistTake } from '@/src/features/take/api';
 import { useDraft } from '@/src/features/cam/draft';
+import { msg, msgError } from '@/src/lib/messages';
 import { supabase } from '@/src/lib/supabase';
 
 export default function AuthScreen() {
@@ -32,13 +33,13 @@ export default function AuthScreen() {
   return (
     <Screen>
       <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 16 }}>
-        <MonoText size={18}>AUTH</MonoText>
+        <MonoText size={18}>{msg.authTitle}</MonoText>
         <Tap
           label="GOOGLE"
           onPress={async () => {
             const res = await signInWithGoogle();
             if (!res.ok) {
-              setNote(res.error ?? 'GOOGLE');
+              setNote(msgError(res.error ?? 'GOOGLE'));
               return;
             }
             await afterAuth();
@@ -49,7 +50,7 @@ export default function AuthScreen() {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          placeholder="EMAIL"
+          placeholder={msg.emailPlaceholder}
         />
         <Tap
           label="MAGIC LINK"
@@ -58,7 +59,7 @@ export default function AuthScreen() {
               email,
               options: { emailRedirectTo: 'hexy://auth' },
             });
-            setNote(error ? error.message : 'SENT');
+            setNote(error ? msgError(error.message) : msg.sent);
           }}
         />
         {note ? <MonoText dim>{note}</MonoText> : null}

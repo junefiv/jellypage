@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 
@@ -11,12 +11,14 @@ import { MonoText } from '@/src/components/ui/MonoText';
 import { Screen } from '@/src/components/ui/Screen';
 import { Tap } from '@/src/components/ui/Tap';
 import { Well } from '@/src/components/ui/Well';
+import { showAlert } from '@/src/features/alert/alert';
 import { useSession } from '@/src/features/auth/session';
 import { listThreads } from '@/src/features/dm/api';
 import { useDock } from '@/src/features/nav/dock';
 import { deleteTake, listMyTakes, publicBlur } from '@/src/features/take/api';
 import { deleteLocalTake, listLocalTakes, type LocalTake } from '@/src/features/take/local-album';
 import type { Take } from '@/src/lib/database.types';
+import { msg } from '@/src/lib/messages';
 import { queryClient } from '@/src/lib/query';
 
 export default function LogScreen() {
@@ -101,6 +103,21 @@ export default function LogScreen() {
     [rows],
   );
 
+  const pushSignInAlert = useCallback(() => {
+    if (session) return;
+    showAlert(pane === 'log' ? msg.signInColorMatch : msg.signInMatchDm);
+  }, [pane, session]);
+
+  useFocusEffect(
+    useCallback(() => {
+      pushSignInAlert();
+    }, [pushSignInAlert]),
+  );
+
+  useEffect(() => {
+    pushSignInAlert();
+  }, [pushSignInAlert]);
+
   return (
     <Screen>
       <View
@@ -118,32 +135,19 @@ export default function LogScreen() {
         <MeMark />
       </View>
       {pane === 'log' ? (
-        <>
-          {!session ? (
-            <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-              <Well style={{ gap: 8 }}>
-                <MonoText>SIGN IN TO FIND PHOTOS WITH SIMILAR COLORS</MonoText>
-                <MonoText dim size={11}>YOUR LOCAL ALBUM STAYS ON THIS DEVICE</MonoText>
-                <Tap
-                  label="SIGN IN"
-                  onPress={() => router.push({ pathname: '/(auth)', params: { next: 'log' } })}
-                />
-              </Well>
-            </View>
-          ) : null}
+        <View style={{ flex: 1 }}>
           <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
             <Field
               value={q}
               onChangeText={setQ}
-              placeholder="DATE / HEX"
+              placeholder={msg.dateHexPlaceholder}
               autoCapitalize="characters"
             />
           </View>
           <AlbumScatter items={scatterItems} replayKey={albumReplay} />
-        </>
+        </View>
       ) : !session ? (
         <View style={{ padding: 24, gap: 12 }}>
-          <MonoText>SIGN IN TO SEE MATCHES AND DM</MonoText>
           <Tap
             label="SIGN IN"
             onPress={() => router.push({ pathname: '/(auth)', params: { next: 'log' } })}
@@ -156,7 +160,7 @@ export default function LogScreen() {
               <Well>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <MonoText>@{th.handle}</MonoText>
-                  <MonoText dim>{th.unpaid ? 'UNPAID' : th.open ? 'OPEN' : '—'}</MonoText>
+                  <MonoText dim>{th.unpaid ? msg.unpaid : th.open ? 'OPEN' : '—'}</MonoText>
                 </View>
                 <MonoText dim numberOfLines={1}>
                   {th.last || '—'}

@@ -1,5 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
+import { colors } from './src/theme/tokens';
+
 const config: ExpoConfig = {
   name: 'HEXy',
   slug: 'hexy',
@@ -18,7 +20,7 @@ const config: ExpoConfig = {
   android: {
     package: 'com.hexy.app',
     adaptiveIcon: {
-      backgroundColor: '#0B0B0B',
+      backgroundColor: colors.bg,
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -42,7 +44,7 @@ const config: ExpoConfig = {
       {
         image: './assets/images/splash-icon.png',
         resizeMode: 'contain',
-        backgroundColor: '#0B0B0B',
+        backgroundColor: colors.bg,
       },
     ],
     [

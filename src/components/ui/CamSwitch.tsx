@@ -1,5 +1,6 @@
 import JellyButtonDom from '@/src/components/jelly/JellyButton.dom';
 import { jellyDom } from '@/src/components/jelly/domProps';
+import { colors } from '@/src/theme/tokens';
 
 export function CamSwitch({
   label,
@@ -14,7 +15,8 @@ export function CamSwitch({
     <JellyButtonDom
       {...jellyDom()}
       label={label}
-      active={on}
+      active={false}
+      fill={on ? colors.btnOn : colors.btnOff}
       size="sm"
       onPress={async () => onPress()}
     />
