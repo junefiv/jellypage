@@ -1,6 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
-import { colors } from './src/theme/tokens';
+/** Splash / adaptive icon. Keep in sync with `colors.bg` in src/theme/tokens.ts. Node cannot require that TS module from this config. */
+const BG = '#496275';
 
 const config: ExpoConfig = {
   name: 'HEXy',
@@ -20,7 +21,7 @@ const config: ExpoConfig = {
   android: {
     package: 'com.hexy.app',
     adaptiveIcon: {
-      backgroundColor: colors.bg,
+      backgroundColor: BG,
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -44,7 +45,7 @@ const config: ExpoConfig = {
       {
         image: './assets/images/splash-icon.png',
         resizeMode: 'contain',
-        backgroundColor: colors.bg,
+        backgroundColor: BG,
       },
     ],
     [
